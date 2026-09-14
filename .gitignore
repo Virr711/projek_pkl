@@ -6,10 +6,6 @@ wa_gateway/node_modules/
 wa_gateway/auth_info_baileys/
 database.sqlite
 
-# Temporary exclude large image assets for smooth initial push
-assets/images/
-uploads/
-
 # Scratch / temp files
 scratch/
 *.tmp
