@@ -154,11 +154,14 @@ if (!empty($units_list)) {
                                         <span class="badge <?= $jam_info['badge_class'] ?> mt-1 font-monospace" style="font-size: 0.75rem;">
                                             <i class="fa-solid <?= $jam_info['icon'] ?> me-1"></i> <?= $jam_info['label'] ?>
                                         </span>
-                                        <?php if (can_edit_data()): ?>
-                                            <button type="button" class="btn btn-link btn-sm text-success p-0 ms-1" onclick="openModalInputJam(<?= $uid ?>)" title="Input Jam Kerja Baru">
-                                                <i class="fa-solid fa-plus-circle"></i>
-                                            </button>
-                                        <?php endif; ?>
+                                         <?php if (can_edit_data()): ?>
+                                             <button type="button" class="btn btn-link btn-sm text-success p-0 ms-1" onclick="openModalInputJam(<?= $uid ?>)" title="Input Jam Kerja Baru">
+                                                 <i class="fa-solid fa-plus-circle"></i>
+                                             </button>
+                                             <a href="proses_reset_jam_alat.php?id=<?= $uid ?>&redirect_url=servis_penjadwalan.php?cat=peralatan" onclick="return confirm('Reset jam operasional unit <?= htmlspecialchars(addslashes($u['nama'])) ?> (<?= htmlspecialchars(addslashes($u['kode_plat'])) ?>) ke 0 Jam setelah servis?')" class="btn btn-link btn-sm text-warning p-0 ms-1" title="Reset Jam Operasional ke 0 (Servis Selesai)">
+                                                 <i class="fa-solid fa-rotate-left"></i>
+                                             </a>
+                                         <?php endif; ?>
                                     <?php else: ?>
                                         <!-- Display Date for Kendaraan (Auto-Linked via Form Servis) -->
                                         <?php if (!empty($tgl_val) && $tgl_val !== '0000-00-00'): ?>

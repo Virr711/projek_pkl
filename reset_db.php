@@ -14,6 +14,7 @@ $saved_penerima_wa  = [];
 $saved_nota_teknisi = [];
 $saved_plat_hist    = [];
 $saved_log_alat     = [];
+$saved_pengaturan_wa = [];
 
 try {
     $existing_pdo = get_db();
@@ -23,6 +24,7 @@ try {
     $saved_nota_teknisi = $existing_pdo->query("SELECT * FROM nota_teknisi")->fetchAll(PDO::FETCH_ASSOC);
     $saved_plat_hist    = $existing_pdo->query("SELECT * FROM riwayat_perubahan_plat")->fetchAll(PDO::FETCH_ASSOC);
     $saved_log_alat     = $existing_pdo->query("SELECT * FROM log_pemakaian_alat")->fetchAll(PDO::FETCH_ASSOC);
+    $saved_pengaturan_wa = $existing_pdo->query("SELECT * FROM pengaturan_whatsapp LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     // Silently skip if DB/table doesn't exist yet
 }
@@ -105,7 +107,16 @@ $stmt = $pdo->prepare("INSERT INTO `users` (`id`, `username`, `password`, `nama_
 $stmt->execute([$pwd, $pwd, $pwd, $pwd]);
 
 // 2. Seed WA Settings & Restore Multi-Recipients
-$pdo->exec("INSERT INTO `pengaturan_whatsapp` (`id`, `api_token`, `target_phone`, `notif_h30_aktif`, `notif_h7_aktif`) VALUES (1, '', '082225352170', 1, 1);");
+if (!empty($saved_pengaturan_wa)) {
+    $stmt_set_ins = $pdo->prepare("INSERT INTO `pengaturan_whatsapp` (`id`, `api_token`, `target_phone`, `notif_h30_aktif`, `notif_h7_aktif`) VALUES (1, ?, ?, 1, ?)");
+    $stmt_set_ins->execute([
+        $saved_pengaturan_wa['api_token'] ?? '',
+        $saved_pengaturan_wa['target_phone'] ?? '082225352170',
+        $saved_pengaturan_wa['notif_h7_aktif'] ?? 1
+    ]);
+} else {
+    $pdo->exec("INSERT INTO `pengaturan_whatsapp` (`id`, `api_token`, `target_phone`, `notif_h30_aktif`, `notif_h7_aktif`) VALUES (1, '', '082225352170', 1, 1);");
+}
 
 if (!empty($saved_penerima_wa)) {
     $stmt_r_wa = $pdo->prepare("INSERT INTO `penerima_whatsapp` (`id`, `nama_penerima`, `nomor_whatsapp`, `jabatan`, `is_aktif`, `created_at`) VALUES (?, ?, ?, ?, ?, ?)");
@@ -438,15 +449,24 @@ foreach ($final_servis_to_insert as $rs) {
         $rs['created_at'] ?? date('Y-m-d H:i:s')
     ]);
 
-    // Sync unit service date
+    // Sync unit service date & equipment hours
     $u_id = $rs['id_kendaraan'];
     $tgl_servis = $rs['tgl_servis'];
-    $stmt_u = $pdo->prepare("SELECT interval_servis_bulan FROM kendaraan_alat WHERE id = ?");
+    $stmt_u = $pdo->prepare("SELECT * FROM kendaraan_alat WHERE id = ?");
     $stmt_u->execute([$u_id]);
-    $interval = (int)($stmt_u->fetchColumn() ?: 3);
-    $tgl_berikutnya = date('Y-m-d', strtotime("+$interval months", strtotime($tgl_servis)));
-    $pdo->prepare("UPDATE kendaraan_alat SET tgl_servis_terakhir = ?, tgl_servis_berikutnya = ? WHERE id = ?")
-        ->execute([$tgl_servis, $tgl_berikutnya, $u_id]);
+    $k_unit = $stmt_u->fetch();
+    if ($k_unit) {
+        if ($k_unit['jenis'] === 'peralatan') {
+            $interval_jam = (int)($k_unit['interval_jam_servis'] ?: 1000);
+            $pdo->prepare("UPDATE kendaraan_alat SET tgl_servis_terakhir = ?, tgl_servis_berikutnya = '0000-00-00', jam_operasional = 0, sisa_jam_servis = ? WHERE id = ?")
+                ->execute([$tgl_servis, $interval_jam, $u_id]);
+        } else {
+            $interval = (int)($k_unit['interval_servis_bulan'] ?: 3);
+            $tgl_berikutnya = date('Y-m-d', strtotime("+$interval months", strtotime($tgl_servis)));
+            $pdo->prepare("UPDATE kendaraan_alat SET tgl_servis_terakhir = ?, tgl_servis_berikutnya = ? WHERE id = ?")
+                ->execute([$tgl_servis, $tgl_berikutnya, $u_id]);
+        }
+    }
 }
 
 // 7. Restore Pajak Records (Only real entries with uploaded proof photos)

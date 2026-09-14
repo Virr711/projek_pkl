@@ -253,6 +253,9 @@ $peralatan_units = $pdo->query("SELECT * FROM kendaraan_alat WHERE jenis = 'pera
                                             <button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 me-1" onclick="openModalInputJam(<?= $u['id'] ?>)" title="Input Pemakaian Jam">
                                                 <i class="fa-solid fa-clock-rotate-left me-1"></i> + Jam
                                             </button>
+                                            <a href="proses_reset_jam_alat.php?id=<?= $u['id'] ?>&redirect_url=data_unit.php?tab=peralatan" onclick="return confirm('Reset jam operasional unit <?= htmlspecialchars(addslashes($u['nama'])) ?> (<?= htmlspecialchars(addslashes($u['kode_plat'])) ?>) ke 0 Jam setelah servis?')" class="btn btn-sm btn-warning rounded-pill px-2.5 me-1 text-dark fw-bold" title="Reset Jam Operasional ke 0 (Servis Selesai)">
+                                                <i class="fa-solid fa-rotate-left me-1"></i> Reset Jam
+                                            </a>
                                             <a href="data_unit_form.php?id=<?= $u['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2"><i class="fa-solid fa-pen-to-square"></i></a>
                                             <a href="data_unit_form.php?id=<?= $u['id'] ?>&action=delete" onclick="return confirm('Hapus peralatan ini?')" class="btn btn-sm btn-outline-danger rounded-pill px-2"><i class="fa-solid fa-trash"></i></a>
                                         <?php endif; ?>

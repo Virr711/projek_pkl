@@ -146,6 +146,9 @@ $cnt_alat = count($units);
                                         <button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 me-1" onclick="openModalInputJam(<?= $u['id'] ?>, '<?= htmlspecialchars(addslashes($u['nama'])) ?>', '<?= htmlspecialchars(addslashes($u['kode_plat'])) ?>', <?= (int)($u['jam_operasional'] ?? 0) ?>, <?= (int)($u['sisa_jam_servis'] ?? 1000) ?>)" title="Input Pemakaian Jam">
                                             <i class="fa-solid fa-clock-rotate-left me-1"></i> + Jam
                                         </button>
+                                        <a href="proses_reset_jam_alat.php?id=<?= $u['id'] ?>&redirect_url=data_unit_peralatan.php" onclick="return confirm('Apakah Anda yakin servis unit <?= htmlspecialchars(addslashes($u['nama'])) ?> (<?= htmlspecialchars(addslashes($u['kode_plat'])) ?>) sudah selesai?\n\nJam operasional akan di-reset kembali ke 0 Jam dan Sisa Jam Servis kembali ke 1.000 Jam.')" class="btn btn-sm btn-warning rounded-pill px-2.5 me-1 text-dark fw-bold" title="Reset Jam Operasional ke 0 (Servis Selesai)">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Reset Jam
+                                        </a>
                                         <a href="data_unit_form.php?id=<?= $u['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Edit Unit"><i class="fa-solid fa-pen-to-square"></i></a>
                                         <a href="data_unit_form.php?id=<?= $u['id'] ?>&action=delete" onclick="return confirm('Hapus peralatan ini?')" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Hapus Unit"><i class="fa-solid fa-trash"></i></a>
                                     <?php endif; ?>
@@ -185,13 +188,18 @@ $cnt_alat = count($units);
                     </div>
 
                     <div class="card bg-black bg-opacity-40 border-secondary p-3 mb-3" id="boxUnitInfo" style="display: none;">
-                        <div class="d-flex justify-content-between mb-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="text-white-50 small">Total Jam Operasional Lalu:</span>
                             <span class="fw-bold text-info" id="infoTotalJam">0 Jam</span>
                         </div>
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-white-50 small">Sisa Jam Menuju Servis 1.000 Jam:</span>
                             <span class="fw-bold text-warning" id="infoSisaJam">1000 Jam</span>
+                        </div>
+                        <div class="border-top border-secondary pt-2 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill text-warning fw-bold" onclick="triggerResetFromModal()">
+                                <i class="fa-solid fa-rotate-left me-1"></i> Reset Jam ke 0 (Servis Selesai)
+                            </button>
                         </div>
                     </div>
 
@@ -243,6 +251,20 @@ function onSelectUnitChange(selectElem) {
         box.style.display = 'block';
     } else {
         box.style.display = 'none';
+    }
+}
+
+function triggerResetFromModal() {
+    const select = document.getElementById('select_id_kendaraan');
+    if (!select || !select.value) {
+        alert('Mohon pilih unit peralatan terlebih dahulu.');
+        return;
+    }
+    const selectedOption = select.options[select.selectedIndex];
+    const nama = selectedOption.getAttribute('data-nama') || 'Unit Peralatan';
+    const plat = selectedOption.getAttribute('data-plat') || '';
+    if (confirm('Apakah Anda yakin servis unit ' + nama + ' (' + plat + ') telah selesai?\n\nJam operasional akan di-reset kembali ke 0 Jam dan Sisa Jam Servis kembali ke 1.000 Jam.')) {
+        window.location.href = 'proses_reset_jam_alat.php?id=' + select.value + '&redirect_url=data_unit_peralatan.php';
     }
 }
 </script>

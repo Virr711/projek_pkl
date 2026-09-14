@@ -519,6 +519,34 @@ function catat_pemakaian_alat($pdo, $id_kendaraan, $jam_dipakai, $catatan = '') 
     ];
 }
 
+function reset_jam_operasional_alat($pdo, $id_kendaraan, $catatan = 'Reset Jam Operasional (Servis Selesai)') {
+    $stmt = $pdo->prepare("SELECT * FROM kendaraan_alat WHERE id = ?");
+    $stmt->execute([(int)$id_kendaraan]);
+    $unit = $stmt->fetch();
+    if (!$unit) return false;
+
+    $interval = (int)($unit['interval_jam_servis'] ?? 1000);
+    if ($interval <= 0) $interval = 1000;
+    $today = date('Y-m-d');
+
+    // Reset jam_operasional ke 0 dan sisa_jam_servis ke interval (1.000 jam)
+    $stmt_upd = $pdo->prepare("UPDATE kendaraan_alat SET jam_operasional = 0, sisa_jam_servis = ?, tgl_servis_terakhir = ? WHERE id = ?");
+    $stmt_upd->execute([$interval, $today, $id_kendaraan]);
+
+    // Catat ke log_pemakaian_alat
+    $id_user = $_SESSION['user_id'] ?? null;
+    $nama_user = $_SESSION['nama_lengkap'] ?? 'Teknisi Operasional';
+    $stmt_log = $pdo->prepare("INSERT INTO log_pemakaian_alat (id_kendaraan, jam_dipakai, total_jam_setelah_pakai, sisa_jam_servis_setelah_pakai, id_user, nama_user, catatan) VALUES (?, 0, 0, ?, ?, ?, ?)");
+    $stmt_log->execute([(int)$id_kendaraan, $interval, $id_user, $nama_user, $catatan]);
+
+    return [
+        'total_jam' => 0,
+        'sisa_jam' => $interval,
+        'nama_unit' => $unit['nama'],
+        'kode_plat' => $unit['kode_plat']
+    ];
+}
+
 /**
  * Record License Plate (Nopol) Change History
  */
