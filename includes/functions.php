@@ -496,6 +496,11 @@ function catat_pemakaian_alat($pdo, $id_kendaraan, $jam_dipakai, $catatan = '') 
     $current_sisa = (int)($unit['sisa_jam_servis'] ?? $interval);
     $new_sisa_jam = max(0, $current_sisa - $jam_dipakai);
 
+    // Capped at interval (1.000 Jam) so total hours won't exceed target before reset
+    if ($new_total_jam > $interval) {
+        $new_total_jam = $interval;
+    }
+
     // Update kendaraan_alat
     $stmt_upd = $pdo->prepare("UPDATE kendaraan_alat SET jam_operasional = ?, sisa_jam_servis = ? WHERE id = ?");
     $stmt_upd->execute([$new_total_jam, $new_sisa_jam, $id_kendaraan]);

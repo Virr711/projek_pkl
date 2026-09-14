@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($k_unit['jenis'] === 'peralatan') {
             $interval_jam = (int)($k_unit['interval_jam_servis'] ?: 1000);
-            $stmt_reset_jam = $pdo->prepare("UPDATE kendaraan_alat SET sisa_jam_servis = ? WHERE id = ?");
+            $stmt_reset_jam = $pdo->prepare("UPDATE kendaraan_alat SET jam_operasional = 0, sisa_jam_servis = ? WHERE id = ?");
             $stmt_reset_jam->execute([$interval_jam, $id_kendaraan]);
         }
 
